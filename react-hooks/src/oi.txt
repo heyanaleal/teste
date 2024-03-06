@@ -1,0 +1,57 @@
+import React, { useState, useEffect } from 'react';
+import './App.css';
+
+const getPokemonUrl = id => `https://pokeapi.co/api/v2/pokemon/${id}`;
+
+const PokemonCard = ({ name, id, types, imageUrl }) => {
+  const elementTypes = types.map(typeInfo => typeInfo.type.name);
+
+  return (
+    <li className="card">
+      <img className="card-image" alt={name} src={imageUrl} />
+      <h2 className="card-title">{id}. {name}</h2>
+      <p className="card-subtitle">{elementTypes.join(" | ")}</p>
+    </li>
+  );
+};
+
+const Pokedex = () => {
+  const [pokemons, setPokemons] = useState([]);
+
+  useEffect(() => {
+    const generatePokemonPromises = () => Array(150).fill().map((_, index) =>
+      fetch(getPokemonUrl(index + 1)).then(response => response.json())
+    );
+
+    const fetchPokemonData = async () => {
+      try {
+        const pokemonPromises = generatePokemonPromises();
+        const pokemonDataArray = await Promise.all(pokemonPromises);
+        const formattedPokemonData = pokemonDataArray.map(pokemonData => ({
+          id: pokemonData.id,
+          name: pokemonData.name,
+          types: pokemonData.types,
+          imageUrl: pokemonData.sprites.front_default
+        }));
+        setPokemons(formattedPokemonData);
+      } catch (error) {
+        console.error('Error fetching Pokémon data:', error);
+      }
+    };
+
+    fetchPokemonData();
+  }, []);
+
+  return (
+    <div className="container">
+      <h1>Pokédex</h1>
+      <ul className="pokedex">
+        {pokemons.map(pokemon => (
+          <PokemonCard key={pokemon.id} {...pokemon} />
+        ))}
+      </ul>
+    </div>
+  );
+};
+
+export default Pokedex;
